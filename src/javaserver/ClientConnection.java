@@ -8,13 +8,16 @@ import javax.net.ssl.SSLSocket;
 public class ClientConnection extends Thread
 {
     private SSLSocket socket;
-
+    private Server server;
+    public boolean is_disabled = false;
+    
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
     
-    public ClientConnection(SSLSocket socket) throws IOException
+    public ClientConnection(SSLSocket socket, Server server) throws IOException
     {
         this.socket = socket;
+        this.server = server;
         objectInputStream = new ObjectInputStream(this.socket.getInputStream());
         objectOutputStream = new ObjectOutputStream(this.socket.getOutputStream());
         System.out.println(this.socket.toString());
@@ -34,17 +37,36 @@ public class ClientConnection extends Thread
         }
             while (true)
             {
+                if(this.is_disabled)
+                {
+                    break;
+                }
                 clientMessage = (String) objectInputStream.readObject();
-                System.out.println("Клиент: " + clientMessage);
+                if(clientMessage.equals("connection disable"))
+                {
+                    this.stopConnection();
+                }
+                else
+                {
+                    System.out.println("Клиент: " + clientMessage);
+                    server.sendMessageAll(clientMessage);
+                }
             }
         } catch (IOException ex) {} catch (ClassNotFoundException ex) {}
     }
 
-    public void send(String message) {
+    public void send(String message)
+    {
         try {
             System.out.println("Отправлено к: " + this.socket.toString());
             System.out.println(message);
             objectOutputStream.writeObject(message);
         } catch (IOException ex) {}
+    }
+    
+    public void stopConnection()
+    {
+        this.is_disabled = true;
+        System.out.println("Соединение завершено: " + this.socket.toString());
     }
 }

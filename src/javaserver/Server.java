@@ -29,23 +29,15 @@ public class Server extends Thread
             System.out.println(supportedProtocols[i]);
         }
         
-        if(Arrays.asList(supportedProtocols).contains("TLSv1"))// запрос минимального протокола от сервера. Если он не поддерживается, оставляем дефолтные натройки.
+        if(Arrays.asList(supportedProtocols).contains("TLSv1"))// запрос минимального протокола от сервера.
         {
-            System.out.println("JRE поддерживает TLSv1. Протокол изменён.");
-            String[] protocols = {"TLSv1"};
-            serverSocket.setEnabledProtocols(protocols);
+            System.out.println("JRE поддерживает TLSv1. Возможны проблемы с совместимостью сервера со старыми версиями Android.");
         }
         else
         {
             System.out.println("JRE не поддерживает TLSv1. Используются протоколы по умолчанию.");
         }
         serverSocket.setNeedClientAuth(false);
-        String[] enabledProtocols = serverSocket.getEnabledProtocols(); // вывод используемых протоколов
-        System.out.println("Используемые протоколы:");
-        for(int i = 0; i < enabledProtocols.length; i++)
-        {
-            System.out.println(enabledProtocols[i]);
-        }
         start();
     }
 
@@ -55,7 +47,7 @@ public class Server extends Thread
         System.out.println("");
         while (true) {
             try {
-                ClientConnection clientConnection = new ClientConnection((SSLSocket) serverSocket.accept());
+                ClientConnection clientConnection = new ClientConnection((SSLSocket) serverSocket.accept(), this);
                 System.out.println("Добавлен: " + clientConnection.toString());
                 connects.add(clientConnection);
             } catch (IOException ex) {
