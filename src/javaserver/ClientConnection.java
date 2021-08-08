@@ -68,5 +68,6 @@ public class ClientConnection extends Thread
     {
         this.is_disabled = true;
         System.out.println("Соединение завершено: " + this.socket.toString());
+        server.removeClientConnection(this);
     }
 }

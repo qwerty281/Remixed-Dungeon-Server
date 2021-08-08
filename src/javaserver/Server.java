@@ -31,11 +31,11 @@ public class Server extends Thread
         
         if(Arrays.asList(supportedProtocols).contains("TLSv1"))// запрос минимального протокола от сервера.
         {
-            System.out.println("JRE поддерживает TLSv1. Возможны проблемы с совместимостью сервера со старыми версиями Android.");
+            System.out.println("JRE поддерживает TLSv1.");
         }
         else
         {
-            System.out.println("JRE не поддерживает TLSv1. Используются протоколы по умолчанию.");
+            System.out.println("JRE не поддерживает TLSv1.  Возможны проблемы с совместимостью сервера со старыми версиями Android.");
         }
         serverSocket.setNeedClientAuth(false);
         start();
@@ -49,7 +49,10 @@ public class Server extends Thread
             try {
                 ClientConnection clientConnection = new ClientConnection((SSLSocket) serverSocket.accept(), this);
                 System.out.println("Добавлен: " + clientConnection.toString());
-                connects.add(clientConnection);
+                synchronized(connects) //mutex
+                {
+                    connects.add(clientConnection); 
+                }
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
@@ -57,8 +60,18 @@ public class Server extends Thread
     }
 
     public void sendMessageAll(String msg) {
-        for(ClientConnection client : connects) {
-            client.send(msg);
+        synchronized(connects) //mutex
+        {
+            for(ClientConnection client : connects) {
+                client.send(msg);
+            }
+        }
+    }
+    
+    public void removeClientConnection(ClientConnection client) {
+        synchronized(connects) //mutex
+        {
+            connects.remove(client);
         }
     }
 }
