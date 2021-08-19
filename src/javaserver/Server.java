@@ -11,6 +11,7 @@ import javax.net.ssl.SSLSocket;
 public class Server extends Thread
 {
     List<ClientConnection> connects = new ArrayList<>(); // здесь хранятся соединения с клиентами
+    List<String> usernames = new ArrayList<>(); //здесь хранятся занятые ники
     
     private final int port = 3002;
     private SSLServerSocket serverSocket;
@@ -60,18 +61,62 @@ public class Server extends Thread
     }
 
     public void sendMessageAll(String msg) {
-        synchronized(connects) //mutex
-        {
+        //synchronized(connects) //mutex
+        //{
             for(ClientConnection client : connects) {
                 client.send(msg);
             }
+        //}
+    }
+    
+    public boolean sendMessageTo(String send_to, String msg, String from) {
+        synchronized(usernames)
+        {
+            if(!usernames.contains(send_to))
+            {
+                return false;
+            }
         }
+        //synchronized(connects) //mutex
+        //{
+            if(send_to.equals("user")) //запрещённые ники
+            {
+                return false;
+            }
+            for(ClientConnection client : connects) {
+                if(client.username.equals(send_to))
+                {
+                    client.send("receive from " + from + " " + msg);
+                    return true;
+                }
+            }
+            return false;
+        //}
     }
     
     public void removeClientConnection(ClientConnection client) {
         synchronized(connects) //mutex
         {
             connects.remove(client);
+        }
+    }
+    
+    public boolean addUsername(String username) {
+        synchronized(usernames)
+        {
+            if(usernames.contains(username))
+            {
+                return false;
+            }
+            usernames.add(username);
+            return true;
+        }
+    }
+    
+    public void removeUsername(String username) {
+        synchronized(usernames)
+        {
+            usernames.remove(username);
         }
     }
 }

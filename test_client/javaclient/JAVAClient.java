@@ -2,7 +2,10 @@ package javaclient;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
+import javax.net.ssl.SSLSocket;
 
 public class JAVAClient
 {
@@ -15,7 +18,7 @@ public class JAVAClient
         
         ServerConnection serverConnection = new ServerConnection();
         
-        while (true)
+        while (!serverConnection.is_disabled)
         {
             Scanner cinput = new Scanner(System.in);
             String send = cinput.nextLine();
