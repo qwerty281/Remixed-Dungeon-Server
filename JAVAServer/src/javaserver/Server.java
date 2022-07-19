@@ -61,7 +61,6 @@ public class Server extends Thread
         while (true) {
             try {
                 ClientConnection clientConnection = new ClientConnection((SSLSocket) serverSocket.accept(), this);
-                System.out.println("Добавлен: " + clientConnection.toString());
                 synchronized(connects) //mutex
                 {
                     connects.add(clientConnection); 

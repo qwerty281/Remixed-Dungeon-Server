@@ -39,7 +39,6 @@ public class ClientConnection extends Thread
         this.base64pattern = server.base64pattern;
         objectInputStream = new ObjectInputStream(this.socket.getInputStream());
         objectOutputStream = new ObjectOutputStream(this.socket.getOutputStream());
-        System.out.println(this.socket.toString());
         start();
     }
 
@@ -53,7 +52,7 @@ public class ClientConnection extends Thread
             clientMessage = (String) objectInputStream.readObject();
             if(clientMessage.equals("connection detected"))
             {
-                System.out.println("Клиент: соединение удалось");
+                System.out.println("Клиент " + this.socket.toString() + " : соединение удалось");
             }
             
             this.disconnectTimer.schedule(this.disconnectTimerTask, 1000, 527); //установка таймера дисконнекта. Первая проверка через 1 сек, следующие через 0.527 сек
@@ -163,12 +162,27 @@ public class ClientConnection extends Thread
                         this.send("command error");
                     }
                 }
-                else if(clientMessageCmd[0].equals("chat"))
+                else if(clientMessageCmd[0].equals("chat") && clientMessageCmd.length > 3)
                 {
                     if(clientMessageCmd[1].equals("to"))
                     {
-                        this.send("chat error");
-                        //server.sendMessageTo(clientMessageCmd[2], "чат");
+                        long CurrentTime = System.currentTimeMillis();
+                        if(this.lastSendTime <= CurrentTime - 500)
+                        {
+                            this.lastSendTime = CurrentTime;
+                            if(!server.sendMessageTo(clientMessageCmd[2], clientMessage.substring(clientMessageCmd[0].length() + clientMessageCmd[1].length() + clientMessageCmd[2].length() + 3), this.username))
+                            {
+                                this.send("chat error"); //если отправлять некуда
+                            }
+                            else
+                            {
+                                this.send("chat OK");
+                            }
+                        }
+                        else
+                        {
+                            this.send("chat error");
+                        }
                     }
                     else
                     {
@@ -188,8 +202,6 @@ public class ClientConnection extends Thread
         synchronized(objectOutputStream)
         {
             try {
-                System.out.println("Отправлено к: " + this.socket.toString());
-                System.out.println(message);
                 objectOutputStream.writeObject(message);
             } catch (IOException ex) {}
         }
