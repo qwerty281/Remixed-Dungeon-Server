@@ -80,7 +80,7 @@ public class Server extends Thread
         //}
     }
     
-    public boolean sendMessageTo(String send_to, String msg, String from) {
+    public boolean sendMessageTo(String send_to, String prefix, String msg, String from) {
         synchronized(usernames)
         {
             if(!usernames.contains(send_to))
@@ -88,21 +88,18 @@ public class Server extends Thread
                 return false;
             }
         }
-        //synchronized(connects) //mutex
-        //{
-            if(send_to.equals("user")) //запрещённые ники
-            {
-                return false;
-            }
-            for(ClientConnection client : connects) {
-                if(client.username.equals(send_to))
-                {
-                    client.send("receive from " + from + " " + msg);
-                    return true;
-                }
-            }
+        if(send_to.equals("user")) //запрещённые ники
+        {
             return false;
-        //}
+        }
+        for(ClientConnection client : connects) {
+            if(client.username.equals(send_to))
+            {
+                client.send(prefix + from + " " + msg);
+                return true;
+            }
+        }
+        return false;
     }
     
     public void removeClientConnection(ClientConnection client) {

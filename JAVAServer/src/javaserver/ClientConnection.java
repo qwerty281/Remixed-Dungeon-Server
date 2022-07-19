@@ -136,14 +136,14 @@ public class ClientConnection extends Thread
                     if(clientMessageCmd[1].equals("to"))
                     {
                         long CurrentTime = System.currentTimeMillis();
-                        if(this.lastSendTime <= CurrentTime - 500)
+                        if(this.lastSendTime <= CurrentTime - 1500)
                         {
                             this.lastSendTime = CurrentTime;
                             if(!base64pattern.matcher(clientMessageCmd[3]).matches())
                             {
                                 this.send("send error");
                             }
-                            else if(!server.sendMessageTo(clientMessageCmd[2], clientMessageCmd[3], this.username))
+                            else if(!server.sendMessageTo(clientMessageCmd[2], "receive from ", clientMessageCmd[3], this.username))
                             {
                                 this.send("send error"); //если отправлять некуда
                             }
@@ -167,10 +167,10 @@ public class ClientConnection extends Thread
                     if(clientMessageCmd[1].equals("to"))
                     {
                         long CurrentTime = System.currentTimeMillis();
-                        if(this.lastSendTime <= CurrentTime - 500)
+                        if(this.lastSendTime <= CurrentTime - 1500)
                         {
                             this.lastSendTime = CurrentTime;
-                            if(!server.sendMessageTo(clientMessageCmd[2], clientMessage.substring(clientMessageCmd[0].length() + clientMessageCmd[1].length() + clientMessageCmd[2].length() + 3), this.username))
+                            if(!server.sendMessageTo(clientMessageCmd[2], "chat from ", clientMessage.substring(clientMessageCmd[0].length() + clientMessageCmd[1].length() + clientMessageCmd[2].length() + 3), this.username))
                             {
                                 this.send("chat error"); //если отправлять некуда
                             }
