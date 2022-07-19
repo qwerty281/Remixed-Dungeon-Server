@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.*;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
@@ -14,6 +15,7 @@ public class Server extends Thread
     List<String> usernames = new ArrayList<>(); //здесь хранятся занятые ники
     
     public String serverPassword = "";
+    public Pattern base64pattern = Pattern.compile("^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$");
     private final int port = 3002;
     private SSLServerSocket serverSocket;
     

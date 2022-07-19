@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.regex.*;
 import javax.net.ssl.SSLSocket;
 
 
@@ -16,6 +17,7 @@ public class ClientConnection extends Thread
     public boolean authed = false; //пароль проверен?
     public String username = "user"; //имя пользователя
     public String serverPassword; //пароль сервера
+    public Pattern base64pattern;
     public long lastHBTime; //время последнего проверочного сообщения от пользователя
     private long lastSendTime = 0; //время последней отправки предмета от пользователя
     private int authAttempts = 3;
@@ -34,6 +36,7 @@ public class ClientConnection extends Thread
         this.socket = socket;
         this.server = server;
         this.serverPassword = server.serverPassword;
+        this.base64pattern = server.base64pattern;
         objectInputStream = new ObjectInputStream(this.socket.getInputStream());
         objectOutputStream = new ObjectOutputStream(this.socket.getOutputStream());
         System.out.println(this.socket.toString());
@@ -129,7 +132,7 @@ public class ClientConnection extends Thread
                         this.send("command error");
                     }
                 }
-                else if(clientMessageCmd[0].equals("send") && clientMessageCmd.length > 3)
+                else if(clientMessageCmd[0].equals("send") && clientMessageCmd.length == 4)
                 {
                     if(clientMessageCmd[1].equals("to"))
                     {
@@ -137,7 +140,11 @@ public class ClientConnection extends Thread
                         if(this.lastSendTime <= CurrentTime - 500)
                         {
                             this.lastSendTime = CurrentTime;
-                            if(!server.sendMessageTo(clientMessageCmd[2], clientMessage.substring(clientMessageCmd[0].length() + clientMessageCmd[1].length() + clientMessageCmd[2].length() + 3), this.username))
+                            if(!base64pattern.matcher(clientMessageCmd[3]).matches())
+                            {
+                                this.send("send error");
+                            }
+                            else if(!server.sendMessageTo(clientMessageCmd[2], clientMessageCmd[3], this.username))
                             {
                                 this.send("send error"); //если отправлять некуда
                             }
