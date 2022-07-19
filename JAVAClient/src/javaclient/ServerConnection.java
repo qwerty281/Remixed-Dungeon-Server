@@ -26,7 +26,7 @@ public class ServerConnection extends Thread
     public ServerConnection() throws IOException
     {
         int port = 3002;
-        InetAddress addr = InetAddress.getByName("qwerty281projects.tk");
+        InetAddress addr = InetAddress.getByName("194.58.90.188");
         
         SSLSocketFactory socketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
         SSLSocket l_socket = (SSLSocket) socketFactory.createSocket(addr, port); //создание SSL сокета на порту 3002

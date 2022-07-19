@@ -11,7 +11,7 @@ public class JAVAClient
 {
     public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException
     {
-        String keyStoreLocation = "./keystore_client.jks";
+        String keyStoreLocation = "./keystore.jks";
         String keyStorePassword = "12345678";
         System.setProperty("javax.net.ssl.trustStore", keyStoreLocation); //установка пути к хранилищу сертификатов
         System.setProperty("javax.net.ssl.trustStorePassword", keyStorePassword); //установка пароля от хранилища

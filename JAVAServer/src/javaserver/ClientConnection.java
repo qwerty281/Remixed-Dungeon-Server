@@ -13,9 +13,12 @@ public class ClientConnection extends Thread
     private SSLSocket socket;
     private Server server;
     public boolean is_disabled = false; //для завершения потока
+    public boolean authed = false; //пароль проверен?
     public String username = "user"; //имя пользователя
+    public String serverPassword; //пароль сервера
     public long lastHBTime; //время последнего проверочного сообщения от пользователя
     private long lastSendTime = 0; //время последней отправки предмета от пользователя
+    private int authAttempts = 3;
     
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
@@ -30,6 +33,7 @@ public class ClientConnection extends Thread
     {
         this.socket = socket;
         this.server = server;
+        this.serverPassword = server.serverPassword;
         objectInputStream = new ObjectInputStream(this.socket.getInputStream());
         objectOutputStream = new ObjectOutputStream(this.socket.getOutputStream());
         System.out.println(this.socket.toString());
@@ -42,6 +46,7 @@ public class ClientConnection extends Thread
         try {
             String clientMessage;
             this.send("connection started");
+            this.send("auth requested");
             clientMessage = (String) objectInputStream.readObject();
             if(clientMessage.equals("connection detected"))
             {
@@ -69,6 +74,37 @@ public class ClientConnection extends Thread
                         this.lastHBTime = System.currentTimeMillis() / 1000L;
                     }
                 }
+                else if(!authed && clientMessageCmd.length > 0) //авторизация
+                {                    
+                    if(serverPassword.equals(""))
+                    {
+                        authed = true;
+                        this.send("auth OK");
+                    }
+                    else if(clientMessageCmd[0].equals("auth") && clientMessageCmd.length == 2)
+                    {
+                        if(serverPassword.equals(clientMessageCmd[1]) && authAttempts > 0)
+                        {
+                            authed = true;
+                            this.send("auth OK");
+                        }
+                        else
+                        {
+                            this.send("auth failed");
+                            authAttempts--;
+                        }
+                    }
+                    else
+                    {
+                        this.send("auth failed");
+                        this.stopConnection();
+                    }
+                    
+                    if(authAttempts <= 0)
+                    {
+                        this.stopConnection();
+                    }
+                }
                 else if(clientMessageCmd[0].equals("username") && clientMessageCmd.length == 3) //действия при ключевом слове username и правильной длине (3)
                 {
                     if(clientMessageCmd[1].equals("change")) //действие при втором слове change и ключевом username
@@ -87,6 +123,10 @@ public class ClientConnection extends Thread
                         {
                             this.send("username change exists");
                         }
+                    }
+                    else
+                    {
+                        this.send("command error");
                     }
                 }
                 else if(clientMessageCmd[0].equals("send") && clientMessageCmd.length > 3)
@@ -111,6 +151,10 @@ public class ClientConnection extends Thread
                             this.send("send error"); //если 500 мс с прошлой отправки не прошло
                         }
                     }
+                    else
+                    {
+                        this.send("command error");
+                    }
                 }
                 else if(clientMessageCmd[0].equals("chat"))
                 {
@@ -119,10 +163,10 @@ public class ClientConnection extends Thread
                         this.send("chat error");
                         //server.sendMessageTo(clientMessageCmd[2], "чат");
                     }
-                }
-                else if(clientMessageCmd[0].equals("auth")) //авторизация пока не поддерживается
-                {
-                    this.send("auth failed");
+                    else
+                    {
+                        this.send("command error");
+                    }
                 }
                 else
                 {

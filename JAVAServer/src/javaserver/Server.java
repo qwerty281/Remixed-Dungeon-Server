@@ -13,13 +13,23 @@ public class Server extends Thread
     List<ClientConnection> connects = new ArrayList<>(); // здесь хранятся соединения с клиентами
     List<String> usernames = new ArrayList<>(); //здесь хранятся занятые ники
     
+    public String serverPassword = "";
     private final int port = 3002;
     private SSLServerSocket serverSocket;
-
-    public Server() throws IOException {
+    
+    public Server(String serverPassword) throws IOException {
         //-------ЗАПУСК СЕРВЕРА--------------
         System.out.println("Запуск сервера...");
-                
+        this.serverPassword = serverPassword;
+        if(!serverPassword.equals(""))
+        {
+            System.out.println("Установлен пароль сервера: " + serverPassword);
+        }
+        else
+        {
+            System.out.println("Разрешен доступ без пароля");
+        }
+        
         SSLServerSocketFactory serverSocketFactory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
         this.serverSocket = (SSLServerSocket) serverSocketFactory.createServerSocket(port); //создание SSL сокета на порту 3002
         
