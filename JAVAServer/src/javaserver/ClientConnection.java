@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.*;
 import javax.net.ssl.SSLSocket;
 
@@ -17,10 +18,14 @@ public class ClientConnection extends Thread
     public boolean authed = false; //пароль проверен?
     public String username = "user"; //имя пользователя
     public String serverPassword; //пароль сервера
-    public Pattern base64pattern;
+    public Pattern base64pattern; //паттерн для проверки, Base64 в строке или нет
     public long lastHBTime; //время последнего проверочного сообщения от пользователя
     private long lastSendTime = 0; //время последней отправки предмета от пользователя
-    private int authAttempts = 3;
+    private long lastChatTime = 0; //время последней отправки чата от пользователя
+    public AtomicLong lastRecieveTime = new AtomicLong(0); //время последнего получения предмета/чата
+    private int authAttempts = 3; // Попытки входа на сервер
+    private int usernameChanges = 1; // Количество доступных смен ника
+    
     
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
@@ -111,7 +116,7 @@ public class ClientConnection extends Thread
                 {
                     if(clientMessageCmd[1].equals("change")) //действие при втором слове change и ключевом username
                     {
-                        if(clientMessageCmd[2].equals("user"))
+                        if(clientMessageCmd[2].equals("user") || !base64pattern.matcher(clientMessageCmd[2]).matches() || usernameChanges < 1) //user - системный ник, а новый ник должен быть в Base64 + проверка кол-ва смен ника
                         {
                             this.send("username change error");
                         }
@@ -120,6 +125,7 @@ public class ClientConnection extends Thread
                             this.server.removeUsername(this.username);
                             this.username = clientMessageCmd[2];
                             this.send("username change OK");
+                            usernameChanges--;
                         }
                         else
                         {
@@ -136,7 +142,7 @@ public class ClientConnection extends Thread
                     if(clientMessageCmd[1].equals("to"))
                     {
                         long CurrentTime = System.currentTimeMillis();
-                        if(this.lastSendTime <= CurrentTime - 1500)
+                        if(this.lastSendTime <= CurrentTime - 5000)
                         {
                             this.lastSendTime = CurrentTime;
                             if(!base64pattern.matcher(clientMessageCmd[3]).matches())
@@ -154,7 +160,7 @@ public class ClientConnection extends Thread
                         }
                         else
                         {
-                            this.send("send error"); //если 500 мс с прошлой отправки не прошло
+                            this.send("send error"); //если 5 секунд с прошлой отправки не прошло
                         }
                     }
                     else
@@ -162,15 +168,19 @@ public class ClientConnection extends Thread
                         this.send("command error");
                     }
                 }
-                else if(clientMessageCmd[0].equals("chat") && clientMessageCmd.length > 3)
+                else if(clientMessageCmd[0].equals("chat") && clientMessageCmd.length == 4)
                 {
                     if(clientMessageCmd[1].equals("to"))
                     {
                         long CurrentTime = System.currentTimeMillis();
-                        if(this.lastSendTime <= CurrentTime - 1500)
+                        if(this.lastChatTime <= CurrentTime - 2800)
                         {
-                            this.lastSendTime = CurrentTime;
-                            if(!server.sendMessageTo(clientMessageCmd[2], "chat from ", clientMessage.substring(clientMessageCmd[0].length() + clientMessageCmd[1].length() + clientMessageCmd[2].length() + 3), this.username))
+                            this.lastChatTime = CurrentTime;
+                            if(!base64pattern.matcher(clientMessageCmd[3]).matches())
+                            {
+                                this.send("chat error");
+                            }
+                            else if(!server.sendMessageTo(clientMessageCmd[2], "chat from ", clientMessage.substring(clientMessageCmd[0].length() + clientMessageCmd[1].length() + clientMessageCmd[2].length() + 3), this.username))
                             {
                                 this.send("chat error"); //если отправлять некуда
                             }
@@ -186,7 +196,7 @@ public class ClientConnection extends Thread
                     }
                     else
                     {
-                        this.send("command error");
+                        this.send("command error"); //Если не прошло 2.8 сек с последнего сообщения
                     }
                 }
                 else

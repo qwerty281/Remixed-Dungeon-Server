@@ -88,15 +88,21 @@ public class Server extends Thread
                 return false;
             }
         }
-        if(send_to.equals("user")) //запрещённые ники
+        if(send_to.equals("user") || send_to.equals(from)) //запрещённые ники
         {
             return false;
         }
         for(ClientConnection client : connects) {
             if(client.username.equals(send_to))
             {
-                client.send(prefix + from + " " + msg);
-                return true;
+                long CurrentTime = System.currentTimeMillis();
+                if(client.lastRecieveTime.get() <= CurrentTime - 2800)
+                {
+                    client.send(prefix + from + " " + msg);
+                    client.lastRecieveTime.set(CurrentTime);
+                    return true;
+                }
+                
             }
         }
         return false;
