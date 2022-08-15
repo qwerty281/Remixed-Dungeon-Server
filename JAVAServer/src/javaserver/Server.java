@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.*;
+import java.util.Base64;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
@@ -15,17 +16,21 @@ public class Server extends Thread
     List<String> usernames = new ArrayList<>(); //здесь хранятся занятые ники
     
     public String serverPassword = "";
+    public boolean print_errors = false;
     public Pattern base64pattern = Pattern.compile("^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$");
     private final int port = 3002;
     private SSLServerSocket serverSocket;
     
-    public Server(String serverPassword) throws IOException {
+    public Server(String serverPassword, boolean print_errors) throws IOException {
         //-------ЗАПУСК СЕРВЕРА--------------
         System.out.println("Запуск сервера...");
+        this.print_errors = print_errors;
         this.serverPassword = serverPassword;
         if(!serverPassword.equals(""))
         {
+            this.serverPassword = new String(Base64.getEncoder().encode(serverPassword.getBytes()));
             System.out.println("Установлен пароль сервера: " + serverPassword);
+            System.out.println("Base64: " + this.serverPassword);
         }
         else
         {
@@ -66,7 +71,10 @@ public class Server extends Thread
                     connects.add(clientConnection); 
                 }
             } catch (IOException ex) {
-                ex.printStackTrace();
+                if(this.print_errors)
+                {
+                    ex.printStackTrace();
+                }
             }
         }
     }

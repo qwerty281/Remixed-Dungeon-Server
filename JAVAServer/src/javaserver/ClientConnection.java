@@ -90,7 +90,7 @@ public class ClientConnection extends Thread
                     }
                     else if(clientMessageCmd[0].equals("auth") && clientMessageCmd.length == 2)
                     {
-                        if(serverPassword.equals(clientMessageCmd[1]) && authAttempts > 0)
+                        if(base64pattern.matcher(clientMessageCmd[1]).matches() && serverPassword.equals(clientMessageCmd[1]) && authAttempts > 0)
                         {
                             authed = true;
                             this.send("auth OK");
@@ -204,7 +204,12 @@ public class ClientConnection extends Thread
                     this.send("command error");
                 }
             }
-        } catch (IOException ex) {} catch (ClassNotFoundException ex) {}
+        } catch (Exception ex) {
+            if(server.print_errors)
+            {
+                ex.printStackTrace();
+            }
+        }
     }
 
     public void send(String message)
@@ -213,7 +218,12 @@ public class ClientConnection extends Thread
         {
             try {
                 objectOutputStream.writeObject(message);
-            } catch (IOException ex) {}
+            } catch (IOException ex) {
+                if(server.print_errors)
+                {
+                    ex.printStackTrace();
+                }
+            }
         }
     }
     
